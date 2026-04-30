@@ -46,9 +46,12 @@ create table public.contestants (
 
 alter table public.contestants enable row level security;
 
--- Reads happen via service role (server-only), so no public select policy is needed.
--- If we later move some reads to the anon key, add:
--- create policy "contestants_public_read" on public.contestants for select using (true);
+-- Server reads use the anon key (no service role on the request path), so RLS
+-- needs an explicit select policy. Contestant data isn't sensitive.
+create policy "contestants_public_read"
+  on public.contestants
+  for select
+  using (true);
 ```
 
 Auth: in the Supabase dashboard, **Authentication → Providers → Email** → disable "Confirm email" (matches the user's choice). Keep email + password enabled.

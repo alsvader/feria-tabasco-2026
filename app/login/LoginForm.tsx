@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { ArrowRight, AlertCircle } from "lucide-react";
 import { Card } from "@/components/ui/Card";
@@ -11,7 +10,6 @@ import { cn } from "@/lib/utils/cn";
 type Mode = "login" | "signup";
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
-  const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,13 +41,13 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
       };
       if (!res.ok) {
         setError(data.error ?? "No pudimos completar la operación.");
+        setPending(false);
         return;
       }
-      router.push(redirectTo);
-      router.refresh();
+      // Full reload: a soft push+refresh races with middleware redirecting /login → /.
+      window.location.assign(redirectTo);
     } catch {
       setError("Error de red. Inténtalo de nuevo.");
-    } finally {
       setPending(false);
     }
   };
