@@ -15,6 +15,7 @@ import {
   useHydratedRaffle,
   type Ticket
 } from "@/lib/store/raffle-store";
+import type { Contestant } from "@/lib/data/contestants";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { formatCurrency } from "@/lib/utils/format";
@@ -22,7 +23,7 @@ import { buildWhatsAppPaymentUrl } from "@/lib/config/whatsapp";
 
 type Phase = "idle" | "sent" | "empty";
 
-export function PaymentClient() {
+export function PaymentClient({ contestants }: { contestants: Contestant[] }) {
   const router = useRouter();
   const hydrated = useHydratedRaffle();
   const selection = useRaffleStore((s) => s.selection);
@@ -45,7 +46,7 @@ export function PaymentClient() {
   const openWhatsApp = (t: Ticket) => {
     const dashboardUrl = `${window.location.origin}/dashboard`;
     window.open(
-      buildWhatsAppPaymentUrl(t, dashboardUrl),
+      buildWhatsAppPaymentUrl(t, dashboardUrl, contestants),
       "_blank",
       "noopener,noreferrer"
     );

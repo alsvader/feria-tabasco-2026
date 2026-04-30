@@ -6,14 +6,15 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ChevronLeft, MapPin } from "lucide-react";
 import { useRaffleStore, useHydratedRaffle } from "@/lib/store/raffle-store";
-import { findContestant } from "@/lib/data/contestants";
+import type { Contestant } from "@/lib/data/contestants";
 import { Card } from "@/components/ui/Card";
 import { PriceBreakdown } from "@/components/review/PriceBreakdown";
 
-export function ReviewClient() {
+export function ReviewClient({ contestants }: { contestants: Contestant[] }) {
   const router = useRouter();
   const hydrated = useHydratedRaffle();
   const selection = useRaffleStore((s) => s.selection);
+  const byId = new Map(contestants.map((c) => [c.id, c]));
 
   useEffect(() => {
     if (hydrated && selection.length < 5) {
@@ -55,7 +56,7 @@ export function ReviewClient() {
 
         <ol className="mt-10 space-y-3">
           {ordered.map((p) => {
-            const c = findContestant(p.contestantId);
+            const c = byId.get(p.contestantId);
             if (!c) return null;
             return (
               <li key={p.contestantId}>

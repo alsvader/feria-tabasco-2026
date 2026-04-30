@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { contestants } from "@/lib/data/contestants";
+import type { Contestant } from "@/lib/data/contestants";
 import { useRaffleStore, useHydratedRaffle } from "@/lib/store/raffle-store";
 import { ContestantCard } from "@/components/selection/ContestantCard";
 import { SelectionStrip } from "@/components/selection/SelectionStrip";
 import { Button } from "@/components/ui/Button";
 
-export function ContestantGrid() {
+export function ContestantGrid({
+  contestants
+}: {
+  contestants: Contestant[];
+}) {
   const hydrated = useHydratedRaffle();
   const selection = useRaffleStore((s) => s.selection);
   const addPick = useRaffleStore((s) => s.addPick);
@@ -21,7 +25,7 @@ export function ContestantGrid() {
   return (
     <div>
       <div className="sticky top-0 z-20 -mx-6 lg:-mx-10 px-6 lg:px-10 py-4 mb-6 bg-bg/85 backdrop-blur-md border-b border-white/[0.06]">
-        <SelectionStrip />
+        <SelectionStrip contestants={contestants} />
       </div>
 
       <div

@@ -1,10 +1,12 @@
 import { Stepper } from "@/components/ui/Stepper";
 import { ReviewClient } from "@/components/review/ReviewClient";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { getContestants } from "@/lib/data/contestants-server";
 
 export const metadata = { title: "Revisión" };
 
-export default function RevisionPage() {
+export default async function RevisionPage() {
+  const contestants = await getContestants();
   return (
     <main className="min-h-[100dvh]">
       <header className="border-b border-white/[0.06]">
@@ -18,7 +20,7 @@ export default function RevisionPage() {
       </header>
 
       <section className="mx-auto max-w-7xl px-6 lg:px-10 py-10 md:py-16">
-        <ReviewClient />
+        <ReviewClient contestants={contestants} />
       </section>
     </main>
   );

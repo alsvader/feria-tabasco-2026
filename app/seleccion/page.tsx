@@ -1,10 +1,12 @@
 import { Stepper } from "@/components/ui/Stepper";
 import { ContestantGrid } from "@/components/selection/ContestantGrid";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { getContestants } from "@/lib/data/contestants-server";
 
 export const metadata = { title: "Selección" };
 
-export default function SeleccionPage() {
+export default async function SeleccionPage() {
+  const contestants = await getContestants();
   return (
     <main className="min-h-[100dvh]">
       <header className="border-b border-white/[0.06]">
@@ -32,7 +34,7 @@ export default function SeleccionPage() {
         </div>
 
         <div className="mt-8 md:mt-10">
-          <ContestantGrid />
+          <ContestantGrid contestants={contestants} />
         </div>
       </section>
     </main>

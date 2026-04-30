@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { LogoutButton } from "@/components/auth/LogoutButton";
+import { getContestants } from "@/lib/data/contestants-server";
 
 export const metadata = { title: "Mis boletos" };
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const contestants = await getContestants();
+
   return (
     <main className="min-h-[100dvh]">
       <header className="border-b border-white/[0.06]">
@@ -23,12 +27,13 @@ export default function DashboardPage() {
             >
               Participantes
             </Link>
+            <LogoutButton />
           </nav>
         </div>
       </header>
 
       <section className="mx-auto max-w-5xl px-6 lg:px-10 py-12 md:py-16">
-        <DashboardClient />
+        <DashboardClient contestants={contestants} />
       </section>
     </main>
   );

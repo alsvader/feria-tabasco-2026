@@ -15,13 +15,18 @@ import {
   horizontalListSortingStrategy,
   sortableKeyboardCoordinates
 } from "@dnd-kit/sortable";
-import { findContestant } from "@/lib/data/contestants";
+import type { Contestant } from "@/lib/data/contestants";
 import { useRaffleStore, type Rank } from "@/lib/store/raffle-store";
 import { SelectionSlot } from "@/components/selection/SelectionSlot";
 
 const RANKS: Rank[] = [1, 2, 3, 4, 5];
 
-export function SelectionStrip() {
+export function SelectionStrip({
+  contestants
+}: {
+  contestants: Contestant[];
+}) {
+  const byId = new Map(contestants.map((c) => [c.id, c]));
   const selection = useRaffleStore((s) => s.selection);
   const reorder = useRaffleStore((s) => s.reorder);
   const removePick = useRaffleStore((s) => s.removePick);
@@ -68,9 +73,7 @@ export function SelectionStrip() {
           <ol className="flex items-center gap-2 sm:gap-3">
             {RANKS.map((rank) => {
               const pick = selection.find((p) => p.rank === rank);
-              const contestant = pick
-                ? findContestant(pick.contestantId)
-                : undefined;
+              const contestant = pick ? byId.get(pick.contestantId) : undefined;
               return (
                 <SelectionSlot
                   key={rank}

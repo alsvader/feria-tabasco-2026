@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { RankingClient } from "@/components/ranking/RankingClient";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { getContestants } from "@/lib/data/contestants-server";
 
 export const metadata = { title: "Ranking" };
 
-export default function RankingPage() {
+export default async function RankingPage() {
+  const contestants = await getContestants();
   return (
     <main className="min-h-[100dvh]">
       <header className="border-b border-white/[0.06]">
@@ -28,7 +30,7 @@ export default function RankingPage() {
       </header>
 
       <section className="mx-auto max-w-6xl px-6 lg:px-10 py-12 md:py-16">
-        <RankingClient />
+        <RankingClient contestants={contestants} />
       </section>
     </main>
   );

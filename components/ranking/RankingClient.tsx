@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Crown, Sparkles, TrendingUp } from "lucide-react";
 import { useRaffleStore, useHydratedRaffle } from "@/lib/store/raffle-store";
-import { contestants, findContestant } from "@/lib/data/contestants";
+import type { Contestant } from "@/lib/data/contestants";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PodiumCard } from "@/components/ranking/PodiumCard";
@@ -25,9 +25,14 @@ function scorePicks(
     .sort((a, b) => b.score - a.score);
 }
 
-export function RankingClient() {
+export function RankingClient({
+  contestants
+}: {
+  contestants: Contestant[];
+}) {
   const hydrated = useHydratedRaffle();
   const tickets = useRaffleStore((s) => s.tickets);
+  const byId = new Map(contestants.map((c) => [c.id, c]));
 
   if (!hydrated) {
     return <RankingSkeleton />;
@@ -42,8 +47,10 @@ export function RankingClient() {
   const rest = scored.slice(3, 13);
 
   const podiumContestants = podium
-    .map((s) => ({ contestant: findContestant(s.contestantId), score: s.score }))
-    .filter((x): x is { contestant: NonNullable<ReturnType<typeof findContestant>>; score: number } => Boolean(x.contestant));
+    .map((s) => ({ contestant: byId.get(s.contestantId), score: s.score }))
+    .filter(
+      (x): x is { contestant: Contestant; score: number } => Boolean(x.contestant)
+    );
 
   const ordered: Array<{ tier: 1 | 2 | 3; data: typeof podiumContestants[number] }> =
     podiumContestants.length === 3
@@ -92,7 +99,7 @@ export function RankingClient() {
           </header>
           <ol className="space-y-2">
             {rest.map((s, i) => {
-              const c = findContestant(s.contestantId);
+              const c = byId.get(s.contestantId);
               if (!c) return null;
               return (
                 <li

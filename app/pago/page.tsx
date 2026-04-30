@@ -1,10 +1,12 @@
 import { Stepper } from "@/components/ui/Stepper";
 import { PaymentClient } from "@/components/payment/PaymentClient";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { getContestants } from "@/lib/data/contestants-server";
 
 export const metadata = { title: "Pago" };
 
-export default function PagoPage() {
+export default async function PagoPage() {
+  const contestants = await getContestants();
   return (
     <main className="min-h-[100dvh] bg-gradient-hero">
       <header className="border-b border-white/[0.06]">
@@ -18,7 +20,7 @@ export default function PagoPage() {
       </header>
 
       <section className="mx-auto max-w-7xl px-6 lg:px-10 py-16 md:py-24 grid place-items-center">
-        <PaymentClient />
+        <PaymentClient contestants={contestants} />
       </section>
     </main>
   );

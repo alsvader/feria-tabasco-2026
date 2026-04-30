@@ -3,11 +3,17 @@
 import Image from "next/image";
 import { CalendarClock } from "lucide-react";
 import type { Ticket } from "@/lib/store/raffle-store";
-import { findContestant } from "@/lib/data/contestants";
+import type { Contestant } from "@/lib/data/contestants";
 import { Card } from "@/components/ui/Card";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 
-export function TicketCard({ ticket }: { ticket: Ticket }) {
+export function TicketCard({
+  ticket,
+  contestantsById
+}: {
+  ticket: Ticket;
+  contestantsById: Map<string, Contestant>;
+}) {
   const ordered = ticket.picks.slice().sort((a, b) => a.rank - b.rank);
 
   return (
@@ -42,7 +48,7 @@ export function TicketCard({ ticket }: { ticket: Ticket }) {
           </p>
           <ol className="mt-3 grid grid-cols-5 gap-3">
             {ordered.map((p) => {
-              const c = findContestant(p.contestantId);
+              const c = contestantsById.get(p.contestantId);
               if (!c) return null;
               return (
                 <li

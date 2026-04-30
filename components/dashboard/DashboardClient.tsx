@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/Button";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TicketCard } from "@/components/dashboard/TicketCard";
 import { formatCurrency } from "@/lib/utils/format";
-import { contestants } from "@/lib/data/contestants";
+import type { Contestant } from "@/lib/data/contestants";
 
 const TICKETS_PER_PAGE = 4;
 
@@ -35,11 +35,17 @@ function formatOdds(tickets: number, total: number): string {
   return `1 en ${denominator.toLocaleString("es-MX")}`;
 }
 
-export function DashboardClient() {
+export function DashboardClient({
+  contestants
+}: {
+  contestants: Contestant[];
+}) {
   const hydrated = useHydratedRaffle();
   const tickets = useRaffleStore((s) => s.tickets);
   const prizePool = useRaffleStore((s) => s.prizePool);
   const [page, setPage] = useState(0);
+
+  const contestantsById = new Map(contestants.map((c) => [c.id, c]));
 
   if (!hydrated) {
     return <DashboardSkeleton />;
@@ -131,7 +137,7 @@ export function DashboardClient() {
                   className="animate-fade-in-up"
                   style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}
                 >
-                  <TicketCard ticket={t} />
+                  <TicketCard ticket={t} contestantsById={contestantsById} />
                 </li>
               ))}
             </ol>

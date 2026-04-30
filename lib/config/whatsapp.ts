@@ -1,5 +1,5 @@
 import type { Ticket } from "@/lib/store/raffle-store";
-import { findContestant } from "@/lib/data/contestants";
+import type { Contestant } from "@/lib/data/contestants";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 
 export const WHATSAPP_PHONE = "+525588063606";
@@ -7,11 +7,13 @@ export const WHATSAPP_PHONE = "+525588063606";
 export function buildWhatsAppPaymentUrl(
   ticket: Ticket,
   dashboardUrl: string,
+  contestants: Contestant[]
 ): string {
+  const byId = new Map(contestants.map((c) => [c.id, c]));
   const ordered = ticket.picks.slice().sort((a, b) => a.rank - b.rank);
   const picks = ordered
     .map((p) => {
-      const c = findContestant(p.contestantId);
+      const c = byId.get(p.contestantId);
       return c ? `${p.rank}. ${c.name} · ${c.ciudad}` : null;
     })
     .filter((line): line is string => line !== null);
