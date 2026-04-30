@@ -20,7 +20,7 @@ export type Ticket = {
 };
 
 export const TICKET_PRICE = 30;
-export const TICKET_FEE = 5;
+export const TICKET_FEE = 6;
 export const TICKET_TOTAL = TICKET_PRICE + TICKET_FEE;
 export const SEED_PRIZE_POOL = 18_500;
 
@@ -55,13 +55,13 @@ export const useRaffleStore = create<RaffleState>()(
         if (selection.some((p) => p.contestantId === contestantId)) return;
         const nextRank = (selection.length + 1) as Rank;
         set({
-          selection: [...selection, { contestantId, rank: nextRank }]
+          selection: [...selection, { contestantId, rank: nextRank }],
         });
       },
 
       removePick: (contestantId) => {
         const remaining = get().selection.filter(
-          (p) => p.contestantId !== contestantId
+          (p) => p.contestantId !== contestantId,
         );
         set({ selection: reassignRanks(remaining) });
       },
@@ -76,7 +76,7 @@ export const useRaffleStore = create<RaffleState>()(
         const [moved] = sorted.splice(fromIdx, 1);
         sorted.splice(toRank - 1, 0, moved);
         set({
-          selection: sorted.map((p, i) => ({ ...p, rank: (i + 1) as Rank }))
+          selection: sorted.map((p, i) => ({ ...p, rank: (i + 1) as Rank })),
         });
       },
 
@@ -89,22 +89,22 @@ export const useRaffleStore = create<RaffleState>()(
           id: `BTL-${shortId()}`,
           picks: selection.map((p) => ({ ...p })),
           total: TICKET_TOTAL,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         };
         set({
           tickets: [ticket, ...tickets],
           prizePool: prizePool + TICKET_PRICE,
-          selection: []
+          selection: [],
         });
         return ticket;
-      }
+      },
     }),
     {
       name: "feria-tabasco-2026:v1",
       storage: createJSONStorage(() => localStorage),
-      skipHydration: true
-    }
-  )
+      skipHydration: true,
+    },
+  ),
 );
 
 /**

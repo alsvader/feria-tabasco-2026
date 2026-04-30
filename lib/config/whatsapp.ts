@@ -1,0 +1,33 @@
+import type { Ticket } from "@/lib/store/raffle-store";
+import { findContestant } from "@/lib/data/contestants";
+import { formatCurrency, formatDate } from "@/lib/utils/format";
+
+export const WHATSAPP_PHONE = "+525588063606";
+
+export function buildWhatsAppPaymentUrl(
+  ticket: Ticket,
+  dashboardUrl: string,
+): string {
+  const ordered = ticket.picks.slice().sort((a, b) => a.rank - b.rank);
+  const picks = ordered
+    .map((p) => {
+      const c = findContestant(p.contestantId);
+      return c ? `${p.rank}. ${c.name} · ${c.ciudad}` : null;
+    })
+    .filter((line): line is string => line !== null);
+
+  const body = [
+    "Hola, quiero pagar mi boleto para Embajadoras Feria Tabasco 2026.",
+    "",
+    `Boleto: ${ticket.id}`,
+    `Fecha: ${formatDate(ticket.createdAt)}`,
+    `Total: ${formatCurrency(ticket.total)}`,
+    "",
+    "Mi Top 5:",
+    ...picks,
+    "",
+    `Dashboard: ${dashboardUrl}`,
+  ].join("\n");
+
+  return `https://wa.me/${WHATSAPP_PHONE}?text=${encodeURIComponent(body)}`;
+}
