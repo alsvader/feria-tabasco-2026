@@ -7,7 +7,7 @@ import { PrizePoolCard } from "@/components/landing/PrizePoolCard";
 
 export function Hero({
   prizePool,
-  ticketCount
+  ticketCount,
 }: {
   prizePool: number;
   ticketCount: number;
@@ -41,8 +41,7 @@ export function Hero({
                 5
               </GradientText>{" "}
               favoritas
-              <br />
-              y gana la bolsa acumulada.
+              <br />y gana la bolsa acumulada.
             </h1>
             <p className="mt-6 max-w-xl text-base sm:text-lg text-text-secondary leading-relaxed">
               Predice el Top 5 de las Embajadoras de la Feria Tabasco 2026 en el
@@ -76,7 +75,7 @@ export function Hero({
             />
             <div className="relative h-full w-full rounded-[2rem] overflow-hidden border border-gold/30 shadow-glow-gold">
               <Image
-                src="https://picsum.photos/seed/feria-tab-queen-hero/800/1000"
+                src="/images/hero/hero_landing.webp"
                 alt="Embajadora Feria Tabasco 2026"
                 fill
                 priority
