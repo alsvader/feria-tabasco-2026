@@ -24,6 +24,12 @@ export default async function RankingPage() {
               Mis boletos
             </Link>
             <Link
+              href="/resultados"
+              className="px-4 py-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+            >
+              Resultados
+            </Link>
+            <Link
               href="/seleccion"
               className="px-4 py-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
             >

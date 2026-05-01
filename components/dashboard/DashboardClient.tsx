@@ -38,11 +38,15 @@ function formatOdds(tickets: number, total: number): string {
 export function DashboardClient({
   contestants,
   tickets,
-  prizePool
+  prizePool,
+  scores,
+  winnerTicketIds
 }: {
   contestants: Contestant[];
   tickets: Ticket[];
   prizePool: number;
+  scores: Map<string, number>;
+  winnerTicketIds: Set<string>;
 }) {
   const [page, setPage] = useState(0);
 
@@ -139,7 +143,12 @@ export function DashboardClient({
                   className="animate-fade-in-up"
                   style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}
                 >
-                  <TicketCard ticket={t} contestantsById={contestantsById} />
+                  <TicketCard
+                    ticket={t}
+                    contestantsById={contestantsById}
+                    score={scores.get(t.id)}
+                    isWinner={winnerTicketIds.has(t.id)}
+                  />
                 </li>
               ))}
             </ol>

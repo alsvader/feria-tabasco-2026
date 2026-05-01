@@ -30,6 +30,12 @@ function SiteNav() {
             Ranking
           </Link>
           <Link
+            href="/resultados"
+            className="hidden sm:inline-flex items-center h-10 px-4 rounded-full text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+          >
+            Resultados
+          </Link>
+          <Link
             href="/seleccion"
             className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-gradient-brand text-white text-sm font-medium shadow-glow hover:scale-[1.02] hover:shadow-[0_0_36px_-4px_rgb(232_62_140/0.65)] transition-all duration-300"
           >
@@ -55,7 +61,8 @@ const footerCols = [
     links: [
       { label: "Comprar boleto", href: "/seleccion" },
       { label: "Mis boletos", href: "/dashboard" },
-      { label: "Ranking", href: "/ranking" }
+      { label: "Ranking", href: "/ranking" },
+      { label: "Resultados", href: "/resultados" }
     ]
   },
   {

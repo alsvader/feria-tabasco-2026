@@ -4,15 +4,23 @@ import { Wordmark } from "@/components/ui/Wordmark";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { getContestants } from "@/lib/data/contestants-server";
 import { getMyTickets, getPrizePoolStats } from "@/lib/data/tickets-server";
+import {
+  getMyTicketScores,
+  getPublicWinners
+} from "@/lib/data/results-server";
 
 export const metadata = { title: "Mis boletos" };
 
 export default async function DashboardPage() {
-  const [contestants, tickets, { prizePool }] = await Promise.all([
-    getContestants(),
-    getMyTickets(),
-    getPrizePoolStats()
-  ]);
+  const [contestants, tickets, { prizePool }, scores, winners] =
+    await Promise.all([
+      getContestants(),
+      getMyTickets(),
+      getPrizePoolStats(),
+      getMyTicketScores(),
+      getPublicWinners()
+    ]);
+  const winnerTicketIds = new Set(winners.map((w) => w.ticketId));
 
   return (
     <main className="min-h-[100dvh]">
@@ -25,6 +33,12 @@ export default async function DashboardPage() {
               className="px-4 py-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
             >
               Ranking
+            </Link>
+            <Link
+              href="/resultados"
+              className="px-4 py-2 rounded-full text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+            >
+              Resultados
             </Link>
             <Link
               href="/seleccion"
@@ -42,6 +56,8 @@ export default async function DashboardPage() {
           contestants={contestants}
           tickets={tickets}
           prizePool={prizePool}
+          scores={scores}
+          winnerTicketIds={winnerTicketIds}
         />
       </section>
     </main>

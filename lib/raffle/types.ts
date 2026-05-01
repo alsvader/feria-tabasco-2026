@@ -15,3 +15,21 @@ export type Ticket = {
   createdAt: string;
   confirmedAt?: string | null;
 };
+
+export type PublishedResults = {
+  picks: RankedPick[];
+  publishedAt: string;
+};
+
+export type WinnerTicket = {
+  ticketId: string;
+  score: number;
+  prizeShare: number;
+};
+
+export type MyTicketScore = {
+  ticketId: string;
+  score: number;
+};
+
+export const MAX_TICKET_SCORE = 5 + 4 + 3 + 2 + 1;

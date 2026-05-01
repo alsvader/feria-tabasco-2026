@@ -1,22 +1,34 @@
 import Image from "next/image";
-import { CalendarClock, Check, Clock } from "lucide-react";
+import { CalendarClock, Check, Clock, Crown } from "lucide-react";
 import type { Ticket } from "@/lib/raffle/types";
+import { MAX_TICKET_SCORE } from "@/lib/raffle/types";
 import type { Contestant } from "@/lib/data/contestants";
 import { Card } from "@/components/ui/Card";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
+import { cn } from "@/lib/utils/cn";
 
 export function TicketCard({
   ticket,
-  contestantsById
+  contestantsById,
+  score,
+  isWinner = false
 }: {
   ticket: Ticket;
   contestantsById: Map<string, Contestant>;
+  score?: number;
+  isWinner?: boolean;
 }) {
   const ordered = ticket.picks.slice().sort((a, b) => a.rank - b.rank);
   const isConfirmed = ticket.status === "confirmed";
 
   return (
-    <Card padded={false} className="overflow-hidden">
+    <Card
+      padded={false}
+      className={cn(
+        "overflow-hidden",
+        isWinner && "border-gold/60 shadow-glow-gold"
+      )}
+    >
       <div className="grid md:grid-cols-[auto_1fr] gap-0">
         <div className="relative md:w-56 p-6 bg-gradient-brand-soft border-b md:border-b-0 md:border-r border-dashed border-white/10">
           <p className="text-[11px] uppercase tracking-[0.22em] text-text-muted">
@@ -27,18 +39,39 @@ export function TicketCard({
           </p>
           <span
             className={
-              isConfirmed
-                ? "mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-emerald-300"
-                : "mt-3 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-gold"
+              isWinner
+                ? "mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-gold px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-primary font-bold"
+                : isConfirmed
+                  ? "mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-emerald-300"
+                  : "mt-3 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-gold"
             }
           >
-            {isConfirmed ? (
+            {isWinner ? (
+              <Crown size={11} strokeWidth={2.25} />
+            ) : isConfirmed ? (
               <Check size={11} strokeWidth={2.25} />
             ) : (
               <Clock size={11} strokeWidth={2.25} />
             )}
-            {isConfirmed ? "Confirmado" : "Esperando confirmación"}
+            {isWinner
+              ? "Ganador"
+              : isConfirmed
+                ? "Confirmado"
+                : "Esperando confirmación"}
           </span>
+          {typeof score === "number" && (
+            <div className="mt-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
+                Puntaje
+              </p>
+              <p className="mt-1 font-heading text-xl tabular-nums">
+                {score}{" "}
+                <span className="text-sm text-text-muted">
+                  / {MAX_TICKET_SCORE}
+                </span>
+              </p>
+            </div>
+          )}
           <div className="mt-5 inline-flex items-center gap-1.5 text-xs text-text-secondary">
             <CalendarClock size={12} strokeWidth={1.75} />
             {formatDate(ticket.createdAt)}
