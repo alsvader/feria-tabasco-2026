@@ -33,4 +33,10 @@ export type MyTicketScore = {
   score: number;
 };
 
+export type PublicTicketResult = {
+  ticketId: string;
+  score: number;
+  picks: RankedPick[];
+};
+
 export const MAX_TICKET_SCORE = 5;

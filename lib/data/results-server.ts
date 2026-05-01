@@ -2,6 +2,7 @@ import { cache } from "react";
 import { createServerSupabase } from "@/lib/supabase/server";
 import type {
   PublishedResults,
+  PublicTicketResult,
   RankedPick,
   WinnerTicket,
   MyTicketScore
@@ -40,6 +41,23 @@ export const getPublicWinners = cache(async (): Promise<WinnerTicket[]> => {
     picks: r.picks
   }));
 });
+
+export const getPublicTicketResults = cache(
+  async (): Promise<PublicTicketResult[]> => {
+    const supabase = createServerSupabase();
+    const { data, error } = await supabase.rpc("public_ticket_results");
+    if (error) {
+      throw new Error(`Failed to load ticket results: ${error.message}`);
+    }
+    return (
+      data as { ticket_id: string; score: number; picks: RankedPick[] }[]
+    ).map((r) => ({
+      ticketId: r.ticket_id,
+      score: r.score,
+      picks: r.picks
+    }));
+  }
+);
 
 export const getMyTicketScores = cache(
   async (): Promise<Map<string, number>> => {

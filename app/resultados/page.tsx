@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { getContestants } from "@/lib/data/contestants-server";
 import {
+  getPublicTicketResults,
   getPublicWinners,
   getPublishedResults
 } from "@/lib/data/results-server";
@@ -19,20 +20,26 @@ import { MAX_TICKET_SCORE } from "@/lib/raffle/types";
 export const metadata = { title: "Resultados" };
 
 export default async function ResultadosPage() {
-  const [contestants, results, winners] = await Promise.all([
+  const [contestants, results, winners, allTickets] = await Promise.all([
     getContestants(),
     getPublishedResults(),
-    getPublicWinners()
+    getPublicWinners(),
+    getPublicTicketResults()
   ]);
   const byId = new Map(contestants.map((c) => [c.id, c]));
+
+  const winnerIds = new Set(winners.map((w) => w.ticketId));
+  const otherTickets = allTickets
+    .filter((t) => !winnerIds.has(t.ticketId))
+    .sort((a, b) => b.score - a.score || a.ticketId.localeCompare(b.ticketId));
 
   const supabase = createServerSupabase();
   const {
     data: { user }
   } = await supabase.auth.getUser();
-  const showOwnerEmails = isAdmin(user) && winners.length > 0;
+  const showOwnerEmails = isAdmin(user) && allTickets.length > 0;
   const emailByTicketId = showOwnerEmails
-    ? await getTicketEmailsByIds(winners.map((w) => w.ticketId))
+    ? await getTicketEmailsByIds(allTickets.map((t) => t.ticketId))
     : new Map<string, string | null>();
 
   const officialIds = new Set(results?.picks.map((p) => p.contestantId) ?? []);
@@ -208,6 +215,88 @@ export default async function ResultadosPage() {
                 </ol>
               )}
             </section>
+
+            {otherTickets.length > 0 && (
+              <section className="mt-16">
+                <header className="flex items-center justify-between gap-3 mb-5">
+                  <h2 className="font-heading text-2xl tracking-tight">
+                    Resto de boletos
+                  </h2>
+                  <span className="text-xs text-text-muted">
+                    {otherTickets.length}{" "}
+                    {otherTickets.length === 1 ? "boleto" : "boletos"}
+                  </span>
+                </header>
+
+                <ol className="space-y-3">
+                  {otherTickets.map((t) => (
+                    <li
+                      key={t.ticketId}
+                      className="rounded-2xl border border-white/[0.06] bg-surface/60 px-5 py-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-heading text-lg tracking-tight">
+                            {t.ticketId}
+                          </p>
+                          {showOwnerEmails && emailByTicketId.get(t.ticketId) && (
+                            <p className="text-xs text-text-secondary truncate">
+                              {emailByTicketId.get(t.ticketId)}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-xs text-text-muted tabular-nums">
+                          Aciertos {t.score} / {MAX_TICKET_SCORE}
+                        </p>
+                      </div>
+                      <ul className="mt-4 grid grid-cols-5 gap-2">
+                        {t.picks
+                          .slice()
+                          .sort((a, b) => a.rank - b.rank)
+                          .map((p) => {
+                            const c = byId.get(p.contestantId);
+                            if (!c) return null;
+                            const hit = officialIds.has(p.contestantId);
+                            return (
+                              <li
+                                key={p.rank}
+                                className="flex flex-col items-center gap-1.5"
+                              >
+                                <div
+                                  className={cn(
+                                    "relative aspect-square w-full rounded-xl overflow-hidden border-2",
+                                    hit
+                                      ? "border-gold/60"
+                                      : "border-white/10 opacity-50"
+                                  )}
+                                >
+                                  <Image
+                                    src={c.image}
+                                    alt={c.name}
+                                    fill
+                                    sizes="(min-width: 768px) 80px, 18vw"
+                                    className="object-cover"
+                                  />
+                                </div>
+                                <p
+                                  className={cn(
+                                    "text-[11px] text-center leading-tight line-clamp-2",
+                                    hit
+                                      ? "text-text-primary"
+                                      : "text-text-muted"
+                                  )}
+                                >
+                                  {c.name}
+                                </p>
+                              </li>
+                            );
+                          })}
+                      </ul>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
           </>
         )}
       </section>
