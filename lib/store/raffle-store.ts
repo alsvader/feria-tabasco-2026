@@ -3,36 +3,21 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { useEffect, useState } from "react";
-import { shortId } from "@/lib/utils/format";
+import type { Rank, RankedPick } from "@/lib/raffle/types";
 
-export type Rank = 1 | 2 | 3 | 4 | 5;
-
-export type RankedPick = {
-  contestantId: string;
-  rank: Rank;
-};
-
-export type Ticket = {
-  id: string;
-  picks: RankedPick[];
-  total: number;
-  createdAt: string;
-};
-
-export const TICKET_PRICE = 30;
-export const TICKET_FEE = 6;
-export const TICKET_TOTAL = TICKET_PRICE + TICKET_FEE;
-export const SEED_PRIZE_POOL = 18_500;
+export type { Rank, RankedPick, Ticket, TicketStatus } from "@/lib/raffle/types";
+export {
+  TICKET_PRICE,
+  TICKET_FEE,
+  TICKET_TOTAL
+} from "@/lib/raffle/constants";
 
 interface RaffleState {
   selection: RankedPick[];
-  tickets: Ticket[];
-  prizePool: number;
   addPick: (contestantId: string) => void;
   removePick: (contestantId: string) => void;
   reorder: (fromRank: Rank, toRank: Rank) => void;
   clearSelection: () => void;
-  purchaseTicket: () => Ticket | null;
 }
 
 function reassignRanks(picks: RankedPick[]): RankedPick[] {
@@ -46,8 +31,6 @@ export const useRaffleStore = create<RaffleState>()(
   persist(
     (set, get) => ({
       selection: [],
-      tickets: [],
-      prizePool: SEED_PRIZE_POOL,
 
       addPick: (contestantId) => {
         const { selection } = get();
@@ -81,36 +64,15 @@ export const useRaffleStore = create<RaffleState>()(
       },
 
       clearSelection: () => set({ selection: [] }),
-
-      purchaseTicket: () => {
-        const { selection, tickets, prizePool } = get();
-        if (selection.length !== 5) return null;
-        const ticket: Ticket = {
-          id: `BTL-${shortId()}`,
-          picks: selection.map((p) => ({ ...p })),
-          total: TICKET_TOTAL,
-          createdAt: new Date().toISOString(),
-        };
-        set({
-          tickets: [ticket, ...tickets],
-          prizePool: prizePool + TICKET_PRICE,
-          selection: [],
-        });
-        return ticket;
-      },
     }),
     {
-      name: "feria-tabasco-2026:v1",
+      name: "feria-tabasco-2026:v2",
       storage: createJSONStorage(() => localStorage),
       skipHydration: true,
     },
   ),
 );
 
-/**
- * Hydrates the persisted store after mount and exposes a boolean
- * gate that consumers can use to avoid SSR/CSR mismatch flicker.
- */
 export function useHydratedRaffle(): boolean {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {

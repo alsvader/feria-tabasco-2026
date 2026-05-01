@@ -13,13 +13,13 @@ import {
   Target,
   Ticket as TicketIcon
 } from "lucide-react";
-import { useRaffleStore, useHydratedRaffle } from "@/lib/store/raffle-store";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { TicketCard } from "@/components/dashboard/TicketCard";
 import { formatCurrency } from "@/lib/utils/format";
 import type { Contestant } from "@/lib/data/contestants";
+import type { Ticket } from "@/lib/raffle/types";
 
 const TICKETS_PER_PAGE = 4;
 
@@ -36,24 +36,22 @@ function formatOdds(tickets: number, total: number): string {
 }
 
 export function DashboardClient({
-  contestants
+  contestants,
+  tickets,
+  prizePool
 }: {
   contestants: Contestant[];
+  tickets: Ticket[];
+  prizePool: number;
 }) {
-  const hydrated = useHydratedRaffle();
-  const tickets = useRaffleStore((s) => s.tickets);
-  const prizePool = useRaffleStore((s) => s.prizePool);
   const [page, setPage] = useState(0);
 
   const contestantsById = new Map(contestants.map((c) => [c.id, c]));
 
-  if (!hydrated) {
-    return <DashboardSkeleton />;
-  }
-
   const totalContribution = tickets.reduce((sum, t) => sum + t.total, 0);
   const totalCombinations = permutationsCount(contestants.length, 5);
-  const odds = formatOdds(tickets.length, totalCombinations);
+  const confirmedCount = tickets.filter((t) => t.status === "confirmed").length;
+  const odds = formatOdds(confirmedCount, totalCombinations);
 
   const totalPages = Math.max(1, Math.ceil(tickets.length / TICKETS_PER_PAGE));
   const safePage = Math.min(page, totalPages - 1);
@@ -95,7 +93,11 @@ export function DashboardClient({
               value={String(tickets.length)}
               icon={TicketIcon}
               accent="pink"
-              hint="Predicciones activas"
+              hint={
+                confirmedCount === tickets.length
+                  ? "Todos confirmados"
+                  : `${confirmedCount} confirmados`
+              }
             />
             <StatCard
               label="Aportación total"
@@ -109,7 +111,7 @@ export function DashboardClient({
               value={formatCurrency(prizePool)}
               icon={Sparkles}
               accent="gold"
-              hint="Crece con cada boleto vendido"
+              hint="Crece con cada boleto confirmado"
             />
             <StatCard
               label="Probabilidad"
@@ -227,21 +229,5 @@ function EmptyState() {
         </Link>
       </Button>
     </Card>
-  );
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="h-12 w-2/3 max-w-md bg-surface rounded-2xl" />
-      <div className="mt-3 h-5 w-1/2 max-w-sm bg-surface/60 rounded-2xl" />
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="h-36 bg-surface rounded-3xl" />
-        <div className="h-36 bg-surface rounded-3xl" />
-        <div className="h-36 bg-surface rounded-3xl" />
-        <div className="h-36 bg-surface rounded-3xl" />
-      </div>
-      <div className="mt-12 h-44 bg-surface rounded-3xl" />
-    </div>
   );
 }

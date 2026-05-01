@@ -1,50 +1,27 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Crown, Sparkles, TrendingUp } from "lucide-react";
-import { useRaffleStore, useHydratedRaffle } from "@/lib/store/raffle-store";
 import type { Contestant } from "@/lib/data/contestants";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { PodiumCard } from "@/components/ranking/PodiumCard";
-
-type Score = { contestantId: string; score: number };
-
-function scorePicks(
-  tickets: ReturnType<typeof useRaffleStore.getState>["tickets"]
-): Score[] {
-  const totals = new Map<string, number>();
-  for (const t of tickets) {
-    for (const p of t.picks) {
-      totals.set(p.contestantId, (totals.get(p.contestantId) ?? 0) + (6 - p.rank));
-    }
-  }
-  return Array.from(totals.entries())
-    .map(([contestantId, score]) => ({ contestantId, score }))
-    .sort((a, b) => b.score - a.score);
-}
+import type { RankingRow } from "@/lib/data/tickets-server";
 
 export function RankingClient({
-  contestants
+  contestants,
+  ranking
 }: {
   contestants: Contestant[];
+  ranking: RankingRow[];
 }) {
-  const hydrated = useHydratedRaffle();
-  const tickets = useRaffleStore((s) => s.tickets);
   const byId = new Map(contestants.map((c) => [c.id, c]));
 
-  if (!hydrated) {
-    return <RankingSkeleton />;
-  }
-
-  if (tickets.length === 0) {
+  if (ranking.length === 0) {
     return <TeaserEmpty />;
   }
 
-  const scored = scorePicks(tickets);
-  const podium = scored.slice(0, 3);
-  const rest = scored.slice(3, 13);
+  const podium = ranking.slice(0, 3);
+  const rest = ranking.slice(3, 13);
 
   const podiumContestants = podium
     .map((s) => ({ contestant: byId.get(s.contestantId), score: s.score }))
@@ -197,19 +174,5 @@ function TeaserEmpty() {
         </div>
       </Card>
     </>
-  );
-}
-
-function RankingSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <div className="h-12 w-2/3 max-w-md bg-surface rounded-2xl" />
-      <div className="mt-3 h-5 w-1/2 max-w-sm bg-surface/60 rounded-2xl" />
-      <div className="mt-10 grid gap-4 sm:grid-cols-3">
-        <div className="h-72 bg-surface rounded-3xl" />
-        <div className="h-80 bg-surface rounded-3xl" />
-        <div className="h-72 bg-surface rounded-3xl" />
-      </div>
-    </div>
   );
 }

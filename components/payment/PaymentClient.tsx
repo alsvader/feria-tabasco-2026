@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  AlertCircle,
   ArrowRight,
   Check,
   MessageCircle,
@@ -21,16 +22,17 @@ import { Button } from "@/components/ui/Button";
 import { formatCurrency } from "@/lib/utils/format";
 import { buildWhatsAppPaymentUrl } from "@/lib/config/whatsapp";
 
-type Phase = "idle" | "sent" | "empty";
+type Phase = "idle" | "submitting" | "sent" | "empty" | "error";
 
 export function PaymentClient({ contestants }: { contestants: Contestant[] }) {
   const router = useRouter();
   const hydrated = useHydratedRaffle();
   const selection = useRaffleStore((s) => s.selection);
-  const purchaseTicket = useRaffleStore((s) => s.purchaseTicket);
+  const clearSelection = useRaffleStore((s) => s.clearSelection);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [ticket, setTicket] = useState<Ticket | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -52,13 +54,35 @@ export function PaymentClient({ contestants }: { contestants: Contestant[] }) {
     );
   };
 
-  const handlePay = () => {
-    if (!hydrated || phase !== "idle") return;
-    const created = purchaseTicket();
-    if (!created) return;
-    setTicket(created);
-    setPhase("sent");
-    openWhatsApp(created);
+  const handlePay = async () => {
+    if (!hydrated || phase === "submitting" || phase === "sent") return;
+    setPhase("submitting");
+    setError(null);
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ picks: selection })
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ticket?: Ticket;
+        error?: string;
+      };
+      if (!res.ok || !data.ticket) {
+        setError(data.error ?? "No pudimos guardar tu boleto.");
+        setPhase("error");
+        return;
+      }
+      const created = data.ticket;
+      setTicket(created);
+      clearSelection();
+      setPhase("sent");
+      openWhatsApp(created);
+      router.refresh();
+    } catch {
+      setError("Error de red. Inténtalo de nuevo.");
+      setPhase("error");
+    }
   };
 
   const handleResend = () => {
@@ -79,10 +103,24 @@ export function PaymentClient({ contestants }: { contestants: Contestant[] }) {
     return <SentCard ticket={ticket} onResend={handleResend} />;
   }
 
-  return <PayCard onPay={handlePay} />;
+  return (
+    <PayCard
+      onPay={handlePay}
+      submitting={phase === "submitting"}
+      error={phase === "error" ? error : null}
+    />
+  );
 }
 
-function PayCard({ onPay }: { onPay: () => void }) {
+function PayCard({
+  onPay,
+  submitting,
+  error
+}: {
+  onPay: () => void;
+  submitting: boolean;
+  error: string | null;
+}) {
   return (
     <Card glow="pink" className="max-w-md mx-auto text-center">
       <div className="grid place-items-center">
@@ -107,10 +145,32 @@ function PayCard({ onPay }: { onPay: () => void }) {
         Te abriremos un chat con el comité con tu boleto, predicción y monto a
         cubrir. La confirmación llega por el mismo medio.
       </p>
-      <Button onClick={onPay} size="lg" className="w-full mt-7">
+      {error && (
+        <div
+          role="alert"
+          className="mt-5 flex items-start gap-2 rounded-2xl border border-accent/40 bg-accent/10 px-4 py-3 text-left text-sm text-text-primary"
+        >
+          <AlertCircle
+            size={16}
+            strokeWidth={2}
+            className="mt-0.5 shrink-0 text-accent"
+          />
+          <span>{error}</span>
+        </div>
+      )}
+      <Button
+        onClick={onPay}
+        size="lg"
+        className="w-full mt-7"
+        disabled={submitting}
+      >
         <MessageCircle size={16} strokeWidth={2} />
-        Pagar por WhatsApp
-        <ArrowRight size={16} strokeWidth={2} />
+        {submitting
+          ? "Guardando boleto…"
+          : error
+            ? "Reintentar"
+            : "Pagar por WhatsApp"}
+        {!submitting && <ArrowRight size={16} strokeWidth={2} />}
       </Button>
       <p className="mt-3 text-[11px] text-text-muted">
         El boleto se reserva al abrir WhatsApp.

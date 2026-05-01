@@ -3,11 +3,16 @@ import { DashboardClient } from "@/components/dashboard/DashboardClient";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { getContestants } from "@/lib/data/contestants-server";
+import { getMyTickets, getPrizePoolStats } from "@/lib/data/tickets-server";
 
 export const metadata = { title: "Mis boletos" };
 
 export default async function DashboardPage() {
-  const contestants = await getContestants();
+  const [contestants, tickets, { prizePool }] = await Promise.all([
+    getContestants(),
+    getMyTickets(),
+    getPrizePoolStats()
+  ]);
 
   return (
     <main className="min-h-[100dvh]">
@@ -33,7 +38,11 @@ export default async function DashboardPage() {
       </header>
 
       <section className="mx-auto max-w-5xl px-6 lg:px-10 py-12 md:py-16">
-        <DashboardClient contestants={contestants} />
+        <DashboardClient
+          contestants={contestants}
+          tickets={tickets}
+          prizePool={prizePool}
+        />
       </section>
     </main>
   );

@@ -5,7 +5,13 @@ import { Button } from "@/components/ui/Button";
 import { GradientText } from "@/components/ui/GradientText";
 import { PrizePoolCard } from "@/components/landing/PrizePoolCard";
 
-export function Hero() {
+export function Hero({
+  prizePool,
+  ticketCount
+}: {
+  prizePool: number;
+  ticketCount: number;
+}) {
   return (
     <section className="relative overflow-hidden bg-gradient-hero">
       <div
@@ -52,7 +58,7 @@ export function Hero() {
               </Button>
             </div>
             <div className="mt-8 max-w-md">
-              <PrizePoolCard />
+              <PrizePoolCard prizePool={prizePool} ticketCount={ticketCount} />
             </div>
           </div>
 

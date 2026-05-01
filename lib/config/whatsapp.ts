@@ -1,4 +1,4 @@
-import type { Ticket } from "@/lib/store/raffle-store";
+import type { Ticket } from "@/lib/raffle/types";
 import type { Contestant } from "@/lib/data/contestants";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
 

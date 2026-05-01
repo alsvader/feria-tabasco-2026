@@ -3,12 +3,14 @@ import { ArrowRight, Facebook, Instagram, Twitter, Youtube } from "lucide-react"
 import { Hero } from "@/components/landing/Hero";
 import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { getPrizePoolStats } from "@/lib/data/tickets-server";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { prizePool, ticketCount } = await getPrizePoolStats();
   return (
     <main className="min-h-[100dvh]">
       <SiteNav />
-      <Hero />
+      <Hero prizePool={prizePool} ticketCount={ticketCount} />
       <HowItWorks />
       <SiteFooter />
     </main>

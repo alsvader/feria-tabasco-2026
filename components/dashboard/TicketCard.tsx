@@ -1,8 +1,6 @@
-"use client";
-
 import Image from "next/image";
-import { CalendarClock } from "lucide-react";
-import type { Ticket } from "@/lib/store/raffle-store";
+import { CalendarClock, Check, Clock } from "lucide-react";
+import type { Ticket } from "@/lib/raffle/types";
 import type { Contestant } from "@/lib/data/contestants";
 import { Card } from "@/components/ui/Card";
 import { formatCurrency, formatDate } from "@/lib/utils/format";
@@ -15,11 +13,11 @@ export function TicketCard({
   contestantsById: Map<string, Contestant>;
 }) {
   const ordered = ticket.picks.slice().sort((a, b) => a.rank - b.rank);
+  const isConfirmed = ticket.status === "confirmed";
 
   return (
     <Card padded={false} className="overflow-hidden">
       <div className="grid md:grid-cols-[auto_1fr] gap-0">
-        {/* Stub */}
         <div className="relative md:w-56 p-6 bg-gradient-brand-soft border-b md:border-b-0 md:border-r border-dashed border-white/10">
           <p className="text-[11px] uppercase tracking-[0.22em] text-text-muted">
             Boleto
@@ -27,6 +25,20 @@ export function TicketCard({
           <p className="mt-2 font-heading text-2xl text-gradient-gold tracking-tight">
             {ticket.id}
           </p>
+          <span
+            className={
+              isConfirmed
+                ? "mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-emerald-300"
+                : "mt-3 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.16em] text-gold"
+            }
+          >
+            {isConfirmed ? (
+              <Check size={11} strokeWidth={2.25} />
+            ) : (
+              <Clock size={11} strokeWidth={2.25} />
+            )}
+            {isConfirmed ? "Confirmado" : "Esperando confirmación"}
+          </span>
           <div className="mt-5 inline-flex items-center gap-1.5 text-xs text-text-secondary">
             <CalendarClock size={12} strokeWidth={1.75} />
             {formatDate(ticket.createdAt)}
@@ -41,7 +53,6 @@ export function TicketCard({
           </div>
         </div>
 
-        {/* Picks */}
         <div className="p-6">
           <p className="text-[11px] uppercase tracking-[0.22em] text-text-muted">
             Tu predicción
