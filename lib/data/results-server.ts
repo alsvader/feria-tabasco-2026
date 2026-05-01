@@ -27,11 +27,17 @@ export const getPublicWinners = cache(async (): Promise<WinnerTicket[]> => {
     throw new Error(`Failed to load winners: ${error.message}`);
   }
   return (
-    data as { ticket_id: string; score: number; prize_share: number }[]
+    data as {
+      ticket_id: string;
+      score: number;
+      prize_share: number;
+      picks: RankedPick[];
+    }[]
   ).map((r) => ({
     ticketId: r.ticket_id,
     score: r.score,
-    prizeShare: r.prize_share
+    prizeShare: r.prize_share,
+    picks: r.picks
   }));
 });
 

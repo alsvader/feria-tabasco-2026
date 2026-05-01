@@ -9,6 +9,9 @@ import {
   getPublicWinners,
   getPublishedResults
 } from "@/lib/data/results-server";
+import { getTicketEmailsByIds } from "@/lib/data/admin-tickets-server";
+import { createServerSupabase } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/auth/admin";
 import { cn } from "@/lib/utils/cn";
 import { formatCurrency } from "@/lib/utils/format";
 import { MAX_TICKET_SCORE } from "@/lib/raffle/types";
@@ -22,6 +25,17 @@ export default async function ResultadosPage() {
     getPublicWinners()
   ]);
   const byId = new Map(contestants.map((c) => [c.id, c]));
+
+  const supabase = createServerSupabase();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  const showOwnerEmails = isAdmin(user) && winners.length > 0;
+  const emailByTicketId = showOwnerEmails
+    ? await getTicketEmailsByIds(winners.map((w) => w.ticketId))
+    : new Map<string, string | null>();
+
+  const officialIds = new Set(results?.picks.map((p) => p.contestantId) ?? []);
 
   return (
     <main className="min-h-[100dvh]">
@@ -72,34 +86,15 @@ export default async function ResultadosPage() {
                 .map((p) => {
                   const c = byId.get(p.contestantId);
                   if (!c) return null;
-                  const isQueen = p.rank === 1;
                   return (
                     <li
                       key={p.rank}
-                      className={cn(
-                        "relative rounded-3xl border bg-surface/80 backdrop-blur-sm p-5 text-center",
-                        isQueen
-                          ? "border-gold/60 shadow-glow-gold lg:col-span-1"
-                          : "border-white/[0.06]"
-                      )}
+                      className="relative rounded-3xl border border-white/[0.06] bg-surface/80 backdrop-blur-sm p-5 text-center"
                     >
-                      <div
-                        className={cn(
-                          "absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.2em] font-bold",
-                          isQueen
-                            ? "bg-gradient-gold text-primary"
-                            : "bg-surface-2 text-text-secondary border border-white/10"
-                        )}
-                      >
-                        {isQueen && <Crown size={11} strokeWidth={2.5} />}#
-                        {p.rank}
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.2em] font-bold bg-surface-2 text-text-secondary border border-white/10">
+                        #{p.rank}
                       </div>
-                      <div
-                        className={cn(
-                          "relative aspect-square w-full rounded-2xl overflow-hidden border-2 mt-2",
-                          isQueen ? "border-gold/50" : "border-white/10"
-                        )}
-                      >
+                      <div className="relative aspect-square w-full rounded-2xl overflow-hidden border-2 mt-2 border-white/10">
                         <Image
                           src={c.image}
                           alt={c.name}
@@ -142,22 +137,72 @@ export default async function ResultadosPage() {
                   {winners.map((w) => (
                     <li
                       key={w.ticketId}
-                      className="flex items-center gap-4 rounded-2xl border border-gold/30 bg-gold/5 px-5 py-4"
+                      className="rounded-2xl border border-gold/30 bg-gold/5 px-5 py-4"
                     >
-                      <span className="grid place-items-center h-11 w-11 rounded-2xl bg-gradient-gold text-primary shrink-0">
-                        <Crown size={16} strokeWidth={2.25} />
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-heading text-xl text-gradient-gold tracking-tight">
-                          {w.ticketId}
-                        </p>
-                        <p className="text-xs text-text-muted">
-                          Aciertos {w.score} / {MAX_TICKET_SCORE}
+                      <div className="flex items-center gap-4">
+                        <span className="grid place-items-center h-11 w-11 rounded-2xl bg-gradient-gold text-primary shrink-0">
+                          <Crown size={16} strokeWidth={2.25} />
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-heading text-xl text-gradient-gold tracking-tight">
+                            {w.ticketId}
+                          </p>
+                          {showOwnerEmails && emailByTicketId.get(w.ticketId) && (
+                            <p className="text-xs text-text-secondary truncate">
+                              {emailByTicketId.get(w.ticketId)}
+                            </p>
+                          )}
+                          <p className="text-xs text-text-muted">
+                            Aciertos {w.score} / {MAX_TICKET_SCORE}
+                          </p>
+                        </div>
+                        <p className="font-heading text-2xl text-gradient-gold tabular-nums">
+                          {formatCurrency(w.prizeShare)}
                         </p>
                       </div>
-                      <p className="font-heading text-2xl text-gradient-gold tabular-nums">
-                        {formatCurrency(w.prizeShare)}
-                      </p>
+                      <ul className="mt-4 grid grid-cols-5 gap-2">
+                        {w.picks
+                          .slice()
+                          .sort((a, b) => a.rank - b.rank)
+                          .map((p) => {
+                            const c = byId.get(p.contestantId);
+                            if (!c) return null;
+                            const hit = officialIds.has(p.contestantId);
+                            return (
+                              <li
+                                key={p.rank}
+                                className="flex flex-col items-center gap-1.5"
+                              >
+                                <div
+                                  className={cn(
+                                    "relative aspect-square w-full rounded-xl overflow-hidden border-2",
+                                    hit
+                                      ? "border-gold/60 shadow-glow-gold"
+                                      : "border-white/10 opacity-50"
+                                  )}
+                                >
+                                  <Image
+                                    src={c.image}
+                                    alt={c.name}
+                                    fill
+                                    sizes="(min-width: 768px) 80px, 18vw"
+                                    className="object-cover"
+                                  />
+                                </div>
+                                <p
+                                  className={cn(
+                                    "text-[11px] text-center leading-tight line-clamp-2",
+                                    hit
+                                      ? "text-text-primary"
+                                      : "text-text-muted"
+                                  )}
+                                >
+                                  {c.name}
+                                </p>
+                              </li>
+                            );
+                          })}
+                      </ul>
                     </li>
                   ))}
                 </ol>

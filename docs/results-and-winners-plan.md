@@ -61,7 +61,7 @@ language sql security definer set search_path = public as $$
 $$;
 
 create or replace function public.public_winners()
-returns table (ticket_id text, score int, prize_share int)
+returns table (ticket_id text, score int, prize_share int, picks jsonb)
 language sql security definer set search_path = public as $$
   with actual_ids as (
     select pick->>'contestantId' as contestant_id
@@ -74,7 +74,7 @@ language sql security definer set search_path = public as $$
     from public.tickets where status = 'confirmed'
   ),
   scored as (
-    select t.id,
+    select t.id, t.picks,
       coalesce(sum(
         case when (t_pick->>'contestantId') in (select contestant_id from actual_ids)
         then 1 else 0 end
@@ -82,13 +82,14 @@ language sql security definer set search_path = public as $$
     from public.tickets t
     cross join lateral jsonb_array_elements(t.picks) as t_pick
     where t.status = 'confirmed' and exists (select 1 from actual_ids)
-    group by t.id
+    group by t.id, t.picks
   ),
   top_scored as (
     select * from scored where score > 0 and score = (select max(score) from scored)
   )
   select ts.id, ts.score,
-    ((select prize_pool from pool) / greatest((select count(*) from top_scored), 1))::int
+    ((select prize_pool from pool) / greatest((select count(*) from top_scored), 1))::int,
+    ts.picks
   from top_scored ts;
 $$;
 

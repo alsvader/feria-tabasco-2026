@@ -25,6 +25,7 @@ export type WinnerTicket = {
   ticketId: string;
   score: number;
   prizeShare: number;
+  picks: RankedPick[];
 };
 
 export type MyTicketScore = {
