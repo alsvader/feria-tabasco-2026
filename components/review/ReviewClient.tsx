@@ -50,8 +50,9 @@ export function ReviewClient({ contestants }: { contestants: Contestant[] }) {
           Confirma tu predicción.
         </h1>
         <p className="mt-4 text-text-secondary max-w-xl leading-relaxed">
-          Verifica el orden con cuidado. Una vez procesado el pago, este será el
-          ranking que se evaluará contra el resultado oficial.
+          Estos son los 5 finalistas que predices. El orden es solo para tu
+          referencia: cada candidata que coincida con el Top 5 oficial cuenta
+          como un acierto, sin importar la posición.
         </p>
 
         <ol className="mt-10 space-y-3">

@@ -8,7 +8,7 @@ This phase adds an admin form to enter the official top 5, scores every confirme
 
 ### Decisions
 
-1. **Scoring rule**: exact-position match. Each pick scores `6 − rank` if the predicted contestant is at exactly that rank in the actual top 5; otherwise 0. Maximum ticket score is `5+4+3+2+1 = 15`.
+1. **Scoring rule**: order-agnostic hit count. Each pick scores `1` if the predicted contestant appears anywhere in the official top 5; otherwise `0`. Order is irrelevant — admin still records an ordered top 5 for display, but it has no effect on scoring. Maximum ticket score is `5`.
 2. **Tie-breaking**: pool split evenly among all top-tied tickets via integer division (`pool / count(winners)`). Floor leftover (e.g. $30 / 7 = $4 each, $2 unaccounted) is operator-handled.
 3. **Edit policy**: results are draft-editable until publish. Once published, they lock — to revise, the operator must run `update contest_results set published_at = null where id = 1` directly in SQL. This avoids a one-click "unpublish" that could be misused after results are public.
 4. **Result reveal**: `/resultados` is always reachable; pre-publish it shows a "Próximamente" teaser, post-publish it shows the actual top 5 + winning tickets with their prize share.
@@ -63,9 +63,8 @@ $$;
 create or replace function public.public_winners()
 returns table (ticket_id text, score int, prize_share int)
 language sql security definer set search_path = public as $$
-  with actual as (
-    select (pick->>'rank')::int as rank,
-           pick->>'contestantId' as contestant_id
+  with actual_ids as (
+    select pick->>'contestantId' as contestant_id
     from public.contest_results,
          lateral jsonb_array_elements(actual_picks) as pick
     where id = 1 and published_at is not null
@@ -77,13 +76,12 @@ language sql security definer set search_path = public as $$
   scored as (
     select t.id,
       coalesce(sum(
-        case when (t_pick->>'contestantId') = a.contestant_id
-        then 6 - a.rank else 0 end
+        case when (t_pick->>'contestantId') in (select contestant_id from actual_ids)
+        then 1 else 0 end
       ), 0)::int as score
     from public.tickets t
     cross join lateral jsonb_array_elements(t.picks) as t_pick
-    left join actual a on a.rank = (t_pick->>'rank')::int
-    where t.status = 'confirmed' and exists (select 1 from actual)
+    where t.status = 'confirmed' and exists (select 1 from actual_ids)
     group by t.id
   ),
   top_scored as (
@@ -97,24 +95,22 @@ $$;
 create or replace function public.my_ticket_scores()
 returns table (ticket_id text, score int)
 language sql security definer set search_path = public as $$
-  with actual as (
-    select (pick->>'rank')::int as rank,
-           pick->>'contestantId' as contestant_id
+  with actual_ids as (
+    select pick->>'contestantId' as contestant_id
     from public.contest_results,
          lateral jsonb_array_elements(actual_picks) as pick
     where id = 1 and published_at is not null
   )
   select t.id,
     coalesce(sum(
-      case when (t_pick->>'contestantId') = a.contestant_id
-      then 6 - a.rank else 0 end
+      case when (t_pick->>'contestantId') in (select contestant_id from actual_ids)
+      then 1 else 0 end
     ), 0)::int as score
   from public.tickets t
   cross join lateral jsonb_array_elements(t.picks) as t_pick
-  left join actual a on a.rank = (t_pick->>'rank')::int
   where t.user_id = auth.uid()
     and t.status = 'confirmed'
-    and exists (select 1 from actual)
+    and exists (select 1 from actual_ids)
   group by t.id;
 $$;
 
@@ -154,7 +150,7 @@ The `where score > 0` clause in `public_winners()` matters: if the actual top 5 
 
 ## Files modified
 
-- `components/dashboard/TicketCard.tsx` — accepts optional `score` and `isWinner`; renders a "Ganador" gold badge in place of the status badge when winning, plus a "Puntaje X / 15" line. Card gets a gold border + glow when a winner.
+- `components/dashboard/TicketCard.tsx` — accepts optional `score` and `isWinner`; renders a "Ganador" gold badge in place of the status badge when winning, plus an "Aciertos X / 5" line. Card gets a gold border + glow when a winner.
 - `components/dashboard/DashboardClient.tsx` — accepts `scores: Map<string, number>` and `winnerTicketIds: Set<string>`; threads them into `<TicketCard />`.
 - `app/dashboard/page.tsx` — fetches `getMyTicketScores()` and `getPublicWinners()` in parallel with the existing data and passes both into `DashboardClient`.
 - `app/page.tsx` — adds "Resultados" links in the site header and footer.
@@ -173,13 +169,13 @@ The `where score > 0` clause in `public_winners()` matters: if the actual top 5 
 4. As any user, visit `/resultados` → teaser is shown.
 5. Click "Publicar resultados", confirm modal. Page locks; SQL: `published_at` set.
 6. `/resultados` now shows the top-5 grid + ganadores list.
-7. `/dashboard` shows your ticket(s) with their score `X / 15`. Tickets at the top score get a gold "Ganador" badge and the card glows gold.
+7. `/dashboard` shows your ticket(s) with their score `X / 5`. Tickets at the top score get a gold "Ganador" badge and the card glows gold.
 8. Synthetic-data probe (run during development) confirmed:
    - Unpublished → `public_results` null, `public_winners` empty.
-   - Published, 1 perfect ticket out of N → that ticket is the lone winner, `prize_share = N * 30`.
-   - Published, 2 perfect tickets → both are winners, each receives `2N * 30 / 2 = N * 30`.
-   - Tickets with score 0 (no exact matches) are excluded from winners.
-   - Tickets with non-max score (e.g. 6 from a partial match) are excluded.
+   - Published, 1 ticket with all 5 contestants in the official top 5 (any order) out of N → that ticket is the lone winner with `score = 5`, `prize_share = N * 30`.
+   - Published, 2 tickets each with all 5 contestants → both are winners, each receives `2N * 30 / 2 = N * 30`.
+   - Tickets with `score = 0` (no contestants in common with the official top 5) are excluded from winners.
+   - Tickets with non-max score (e.g. 3 hits when another ticket has 4) are excluded.
 9. After publish, attempting `PUT /api/admin/results` from any client → 409 `"Los resultados ya están publicados…"`.
 10. `pnpm typecheck` clean.
 

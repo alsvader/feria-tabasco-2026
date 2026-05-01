@@ -16,7 +16,7 @@ export function ResultsForm({
   contestants,
   initialPicks,
   publishedAt,
-  updatedAt
+  updatedAt,
 }: {
   contestants: Contestant[];
   initialPicks: RankedPick[] | null;
@@ -28,7 +28,13 @@ export function ResultsForm({
   const byId = new Map(contestants.map((c) => [c.id, c]));
 
   const [picks, setPicks] = useState<Record<Rank, string | null>>(() => {
-    const initial: Record<Rank, string | null> = { 1: null, 2: null, 3: null, 4: null, 5: null };
+    const initial: Record<Rank, string | null> = {
+      1: null,
+      2: null,
+      3: null,
+      4: null,
+      5: null,
+    };
     if (initialPicks) {
       for (const p of initialPicks) initial[p.rank] = p.contestantId;
     }
@@ -53,7 +59,7 @@ export function ResultsForm({
   const allSet = RANKS.every((r) => picks[r]);
   const ranked: RankedPick[] = RANKS.filter((r) => picks[r]).map((r) => ({
     rank: r,
-    contestantId: picks[r] as string
+    contestantId: picks[r] as string,
   }));
 
   const handleSave = async () => {
@@ -64,7 +70,7 @@ export function ResultsForm({
       const res = await fetch("/api/admin/results", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ picks: ranked })
+        body: JSON.stringify({ picks: ranked }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
@@ -83,7 +89,7 @@ export function ResultsForm({
     if (!allSet || publishing || !savedAt) return;
     if (
       !confirm(
-        "Una vez publicados, los resultados no podrán editarse desde aquí. ¿Continuar?"
+        "Una vez publicados, los resultados no podrán editarse desde aquí. ¿Continuar?",
       )
     ) {
       return;
@@ -92,7 +98,7 @@ export function ResultsForm({
     setError(null);
     try {
       const res = await fetch("/api/admin/results/publish", {
-        method: "POST"
+        method: "POST",
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
@@ -118,7 +124,11 @@ export function ResultsForm({
             </p>
             <p className="mt-0.5 text-text-secondary text-xs">
               Publicado el {formatDate(publishedAt!)}. Para revisar cambios,
-              ejecuta en SQL: <code className="text-text-primary">update contest_results set published_at = null where id = 1</code>.
+              ejecuta en SQL:{" "}
+              <code className="text-text-primary">
+                update contest_results set published_at = null where id = 1
+              </code>
+              .
             </p>
           </div>
         </div>
@@ -187,7 +197,9 @@ export function ResultsForm({
             >
               <option value="">— Seleccionar candidata —</option>
               {contestants.map((c) => {
-                const usedAt = RANKS.find((rr) => rr !== r && picks[rr] === c.id);
+                const usedAt = RANKS.find(
+                  (rr) => rr !== r && picks[rr] === c.id,
+                );
                 return (
                   <option key={c.id} value={c.id}>
                     {c.name} · {c.ciudad}
@@ -202,7 +214,9 @@ export function ResultsForm({
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-xs text-text-muted">
-          {savedAt ? `Borrador guardado · ${formatDate(savedAt)}` : "Sin guardar"}
+          {savedAt
+            ? `Borrador guardado · ${formatDate(savedAt)}`
+            : "Sin guardar"}
         </p>
         <div className="flex gap-3">
           <Button

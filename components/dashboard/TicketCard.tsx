@@ -62,7 +62,7 @@ export function TicketCard({
           {typeof score === "number" && (
             <div className="mt-4">
               <p className="text-[11px] uppercase tracking-[0.18em] text-text-muted">
-                Puntaje
+                Aciertos
               </p>
               <p className="mt-1 font-heading text-xl tabular-nums">
                 {score}{" "}

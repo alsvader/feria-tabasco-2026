@@ -32,4 +32,4 @@ export type MyTicketScore = {
   score: number;
 };
 
-export const MAX_TICKET_SCORE = 5 + 4 + 3 + 2 + 1;
+export const MAX_TICKET_SCORE = 5;

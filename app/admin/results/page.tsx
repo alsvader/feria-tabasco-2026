@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminResultsPage() {
   const [contestants, state] = await Promise.all([
     getContestants(),
-    getAdminResults()
+    getAdminResults(),
   ]);
 
   return (
@@ -21,8 +21,8 @@ export default async function AdminResultsPage() {
           Top 5 oficial.
         </h1>
         <p className="mt-3 text-text-secondary leading-relaxed">
-          Captura el orden anunciado en la coronación. Guarda como borrador
-          mientras lo verificas; publica cuando esté firme.
+          El orden es solo informativo; los aciertos se cuentan sin importar la
+          posición.
         </p>
       </div>
 

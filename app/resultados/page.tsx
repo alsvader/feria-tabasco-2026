@@ -126,7 +126,7 @@ export default async function ResultadosPage() {
                   Ganadores
                 </h2>
                 <span className="text-xs text-text-muted">
-                  Puntaje máximo: {MAX_TICKET_SCORE}
+                  Aciertos máximos: {MAX_TICKET_SCORE}
                 </span>
               </header>
 
@@ -152,7 +152,7 @@ export default async function ResultadosPage() {
                           {w.ticketId}
                         </p>
                         <p className="text-xs text-text-muted">
-                          Puntaje {w.score} / {MAX_TICKET_SCORE}
+                          Aciertos {w.score} / {MAX_TICKET_SCORE}
                         </p>
                       </div>
                       <p className="font-heading text-2xl text-gradient-gold tabular-nums">
